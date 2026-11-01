@@ -167,7 +167,108 @@
     return null;
   }
 
+
+  function selectedBadges() {
+    var opts = config();
+    if (!isRunning || !opts.enabled) return [];
+    var items = [];
+    if (opts.nitroBadge) items.push({
+      id: "nitro_mirage_nitro",
+      description: Number(opts.nitroTier) === 1 ? "Nitro Basic" : "Discord Nitro",
+      source: { uri: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png" }
+    });
+    if (opts.boostBadge) {
+      var hashes = {
+        1: "51040c70d4f20a921ad6674ff86fc95c",
+        3: "72bed924410c304dbe3d00a6e593ff59",
+        6: "df199d2050d3ed4ebf84d64ae83989f8",
+        12: "991c9f39ee33d7537d9f408c3e53141e",
+        24: "ec92202290b48d0879b7413d2dde3bab"
+      };
+      var months = Number(opts.boostMonths);
+      items.push({
+        id: "nitro_mirage_boost",
+        description: "Server boosting (" + months + " months)",
+        source: { uri: "https://cdn.discordapp.com/badge-icons/" + (hashes[months] || hashes[1]) + ".png" }
+      });
+    }
+    return items;
+  }
+
+  function installBadgeHooks() {
+    var module = null;
+    try { module = vendetta.metro.findByName("useBadges", false); } catch (_) {}
+    if (!module || typeof module.default !== "function") {
+      report["badge data"] = "not found";
+    } else {
+      report["badge data"] = "installed (not yet rendered)";
+      installAfter(module, "default", function (args, original) {
+        if (!Array.isArray(original) || !args || !args[0] || !isMine(args[0])) return original;
+        var badges = selectedBadges();
+        if (!badges.length) return original;
+        report["badge data"] = "rendered";
+        var result = original.filter(function (badge) {
+          return badge && !String(badge.id).startsWith("nitro_mirage_");
+        });
+        badges.forEach(function (badge) {
+          result.push({ id: badge.id, description: badge.description, icon: "badge_nitro" });
+        });
+        return result;
+      }, "badge data");
+      if (report["badge data"] === "active") report["badge data"] = "installed (not yet rendered)";
+    }
+
+    var jsx = null;
+    try {
+      var client = typeof window === "object" && (window.bunny || window.revenge);
+      jsx = client && client.api && client.api.react && client.api.react.jsx;
+    } catch (_) {}
+    if (jsx && typeof jsx.onJsxCreate === "function") {
+      var supported = 0;
+      ["ProfileBadge", "RenderBadge"].forEach(function (name) {
+        try {
+          var dispose = jsx.onJsxCreate(name, function (_component, element) {
+            var props = element && element.props;
+            if (!props || !props.id || !isMine(props.userId)) return;
+            var badge = selectedBadges().find(function (item) { return item.id === props.id; });
+            if (!badge) return;
+            props.source = badge.source;
+            props.label = badge.description;
+            report["badge icons"] = "rendered";
+          });
+          supported++;
+          if (typeof dispose === "function") unpatches.push(dispose);
+        } catch (_) {}
+      });
+      report["badge icons"] = supported ? "installed (not yet rendered)" : "unsupported";
+    } else {
+      report["badge icons"] = "JSX API unavailable";
+    }
+
+    var before = vendetta.patcher && vendetta.patcher.before;
+    if (typeof before === "function") {
+      ["ProfileBadge", "RenderBadge"].forEach(function (name) {
+        var component = null;
+        try { component = vendetta.metro.findByName(name, false); } catch (_) {}
+        if (!component || typeof component.default !== "function") return;
+        try {
+          var undo = before("default", component, function (args) {
+            var props = args && args[0];
+            if (!props || !isMine(props.userId)) return;
+            var badge = selectedBadges().find(function (item) { return item.id === props.id; });
+            if (!badge) return;
+            args[0] = Object.assign({}, props, { source: badge.source, label: badge.description });
+            report["badge icons"] = "rendered";
+          });
+          if (typeof undo === "function") unpatches.push(undo);
+          if (report["badge icons"] !== "rendered") report["badge icons"] = "installed (not yet rendered)";
+        } catch (_) {}
+      });
+    }
+  }
+
   function tryPatch() {
+    installBadgeHooks();
     var users = null;
     try { users = vendetta.metro.common.UserStore; } catch (_) {}
     if (!users) users = findModule(["getUser", "getCurrentUser"]);
