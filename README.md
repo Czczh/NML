@@ -10,10 +10,6 @@ Refetch the plugin and restart Discord after updates.
 
 ## Banner
 
-Enable **Use local custom banner**. Leave the URL empty for the built-in test image, or supply an HTTPS image URL.
+Enable **Use local custom banner** and **Experimental header overlay**. Leave the URL blank for the test image or enter a direct HTTPS image URL. Use Compact, Standard, or Tall to adjust its height.
 
-**Experimental header overlay** is enabled by default. Disable it if the profile layout glitches.
-
-In **Compatibility**, check `HeaderAvatar renderer`. `installed` means the hook was found; `rendered` means it was applied to your profile.
-
-v1.6.0. All changes are local to the device.
+v1.7.0. Changes are local to your device.
