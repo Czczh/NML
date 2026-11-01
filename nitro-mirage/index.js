@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
   var TEST_BANNER_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqgAAADwCAIAAABDmAG4AAADg0lEQVR42u3doQ3CQBSA4ZbcLggUjjACqoIBGnao6AQIdmCMLkBCUKAQbFGBwVWxwaU5eN+3wb0Tf564XN20YxXJ/bKvACCqhREAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AMAwg8ACD8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AOA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwA4DwAwDCDwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAwkxTtwKv1wa0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AIklGkMvpuDMEgL/X9YONHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQDhBwBmVDftGOrAn/fg1gGw8QMAwg8ACD8A8IuSEeSy2S4NAYpyu74MAWz8ACD8AIDwAwDCDwAIPwAg/ABAITzny8bDIQBs/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/AAg/ACD8AIDwAwDCDwCUJtwnPc/H2a0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AFA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AUD4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8A+JoA94cVGFUEQlcAAAAASUVORK5CYII=";
   var LOCAL_BANNER_HASH = "nitro_mirage_local_banner";
 
@@ -15,6 +15,7 @@
     avatarUrl: "",
     customBanner: false,
     bannerUrl: "",
+    experimentalHeaderBanner: true,
     customDecoration: false,
     decorationAsset: "",
     customColors: false,
@@ -349,8 +350,59 @@
     });
   }
 
+  function installHeaderBannerOverlay() {
+    var module = null;
+    try { module = vendetta.metro.findByName("HeaderAvatar", false); } catch (_) {}
+    if (!module || typeof module.default !== "function") {
+      report["HeaderAvatar renderer"] = "not found";
+      return;
+    }
+    report["HeaderAvatar renderer"] = "installed";
+    installAfter(module, "default", function (args, ret) {
+      var props = args && args[0];
+      if (!props || typeof props !== "object") return ret;
+      if (report["HeaderAvatar renderer"] !== "rendered") {
+        report["HeaderAvatar renderer"] = "called";
+        report["HeaderAvatar props"] = Object.keys(props).slice(0, 14).join(", ") || "none";
+      }
+      if (!ret || !bannerOwner(props) || !config().experimentalHeaderBanner) return ret;
+      var uri = activeBannerUrl();
+      if (!uri) return ret;
+      var common = vendetta.metro.common;
+      var React = common && common.React;
+      var RN = common && common.ReactNative;
+      if (!React || !RN || !RN.View || !RN.Image) return ret;
+      var width = 400;
+      try {
+        if (RN.Dimensions && typeof RN.Dimensions.get === "function") {
+          var screen = RN.Dimensions.get("window");
+          if (screen && Number(screen.width) > 200) width = Number(screen.width);
+        }
+      } catch (_) {}
+      var banner = React.createElement(RN.Image, {
+        key: "nitro-mirage-header-image",
+        source: { uri: uri },
+        resizeMode: "cover",
+        pointerEvents: "none",
+        style: {
+          position: "absolute",
+          top: -94,
+          left: -30,
+          width: Math.max(260, width - 60),
+          height: 166
+        }
+      });
+      report["HeaderAvatar renderer"] = "rendered";
+      return React.createElement(RN.View, {
+        style: { position: "relative", overflow: "visible" }
+      }, banner, ret);
+    }, "HeaderAvatar renderer");
+    if (report["HeaderAvatar renderer"] === "active") report["HeaderAvatar renderer"] = "installed";
+  }
+
   function tryPatch() {
     installBannerRenderers();
+    installHeaderBannerOverlay();
     installBadgeHooks();
     var users = null;
     try { users = vendetta.metro.common.UserStore; } catch (_) {}
@@ -492,6 +544,7 @@
         input("Avatar HTTPS URL", "avatarUrl", "https://example.com/avatar.gif"),
         toggle("Use local custom banner", "customBanner", "Uses a built-in test banner when the URL is empty."),
         input("Banner HTTPS URL", "bannerUrl", "Leave blank for the bundled test image"),
+        toggle("Experimental header overlay", "experimentalHeaderBanner", "Draw the banner behind your own profile avatar when Discord omits its banner component."),
         text("Banner source: " + bannerType, { color: "#A8AAB2", fontSize: 12 })
       ]),
       section("Decorations and profile", [
