@@ -7,8 +7,8 @@
     }
   ],
   "main": "index.js",
-  "version": "1.6.0",
-  "hash": "29d00b2c7d5f00d61da9d5aa7a59879aa763811ae2876959483f9bf3180bff9e",
+  "version": "1.7.0",
+  "hash": "0f1eda7ef17f45b89a7dc96782002b39f7a560d474efc28f1f9f16b052576954",
   "vendetta": {
     "icon": "ic_badge_nitro"
   }
