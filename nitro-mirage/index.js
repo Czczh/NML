@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
   var TEST_BANNER_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqgAAADwCAIAAABDmAG4AAADg0lEQVR42u3doQ3CQBSA4ZbcLggUjjACqoIBGnao6AQIdmCMLkBCUKAQbFGBwVWxwaU5eN+3wb0Tf564XN20YxXJ/bKvACCqhREAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AMAwg8ACD8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AOA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwA4DwAwDCDwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAwkxTtwKv1wa0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AIklGkMvpuDMEgL/X9YONHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQDhBwBmVDftGOrAn/fg1gGw8QMAwg8ACD8A8IuSEeSy2S4NAYpyu74MAWz8ACD8AIDwAwDCDwAIPwAg/ABAITzny8bDIQBs/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/AAg/ACD8AIDwAwDCDwCUJtwnPc/H2a0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AFA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AUD4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8A+JoA94cVGFUEQlcAAAAASUVORK5CYII=";
   var LOCAL_BANNER_HASH = "nitro_mirage_local_banner";
 
@@ -296,7 +296,61 @@
     }
   }
 
+  function bannerOwner(props) {
+    if (!props || typeof props !== "object") return false;
+    var candidates = [props.userId, props.user_id, props.user, props.displayProfile, props.profile, props.userProfile, props.currentUser, props.bannerUserId, props.userData];
+    return candidates.some(function (candidate) { return isMine(candidate); });
+  }
+
+  function installBannerRenderers() {
+    var names = ["DisplayBanner", "ProfileBanner"];
+    names.forEach(function (name) {
+      var module = null;
+      try { module = vendetta.metro.findByName(name, false); } catch (_) {}
+      if (!module || typeof module.default !== "function") {
+        report[name + " renderer"] = "not found";
+        return;
+      }
+      report[name + " renderer"] = "installed";
+      installAfter(module, "default", function (args, ret) {
+        var props = args && args[0];
+        if (!props || typeof props !== "object") return ret;
+        if (report[name + " renderer"] !== "rendered") {
+          report[name + " props"] = Object.keys(props).slice(0,16).join(", ") || "none";
+          report[name + " renderer"] = "called";
+        }
+        var uri = activeBannerUrl();
+        if (!uri || !bannerOwner(props)) return ret;
+        if (name === "ProfileBanner") {
+          report[name + " renderer"] = "rendered";
+          return vendetta.metro.common.React.createElement(vendetta.metro.common.ReactNative.Image, {
+            source: { uri: uri }, resizeMode: "cover",
+            style: Object.assign({ width: "100%", height: 120 }, props.style || {}),
+            pointerEvents: "none"
+          });
+        }
+        var common = vendetta.metro.common;
+        var React = common.React;
+        var RN = common.ReactNative;
+        if (!React || !RN || !RN.View || !RN.Image) return ret;
+        var children = [];
+        if (ret) children.push(ret);
+        children.push(React.createElement(RN.Image, {
+          key: "nitro-mirage-banner", source: { uri: uri }, resizeMode: "cover",
+          pointerEvents: "none",
+          style: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, width: "100%", height: "100%" }
+        }));
+        report[name + " renderer"] = "rendered";
+        return React.createElement.apply(React, [RN.View, {
+          style: { width: "100%", position: "relative", height: ret ? undefined : 120 }
+        }].concat(children));
+      }, name + " renderer");
+      if (report[name + " renderer"] === "active") report[name + " renderer"] = "installed";
+    });
+  }
+
   function tryPatch() {
+    installBannerRenderers();
     installBadgeHooks();
     var users = null;
     try { users = vendetta.metro.common.UserStore; } catch (_) {}
