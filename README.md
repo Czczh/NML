@@ -1,28 +1,19 @@
 # Nitro Mirage Local
 
-Local-only profile customization for Revenge.
+Client-side profile customization for Revenge.
 
-## Features
-
-- Simulated Nitro and Server Boost badges
-- Custom avatar and banner URLs
-- Avatar decorations, profile colors and effects where supported
-- Settings preview
+Features: local Nitro and Boost badges, avatar and banner URLs, profile colors, and decorations where supported.
 
 ## Install
 
-**Revenge Next:** Add the repository in Revenge > Plugins and install Nitro Mirage Local.
-
-`https://raw.githubusercontent.com/Czczh/Test1/main/index.json`
-
-**Revenge Classic:** Install using:
+Revenge Classic: paste the plugin directory URL into Plugins > Install:
 
 `https://raw.githubusercontent.com/Czczh/Test1/main/nitro-mirage/`
 
-Reopen your profile after changing settings.
+Revenge Next: add the repository through its repository manager:
+
+`https://raw.githubusercontent.com/Czczh/Test1/main/index.json`
 
 ## Compatibility
 
-Version 1.1.0 adds profile badge rendering for Revenge Next. Appearance hooks may vary across Discord versions. Android verification is pending.
-
-Visual only. Does not unlock Nitro privileges or change the account on Discord's servers.
+Classic v1.2.0 adds a `useBadges` hook. Open Plugin Settings > Compatibility to check its status. Changes are local and do not grant Nitro features.
