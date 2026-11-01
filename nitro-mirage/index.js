@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  var VERSION = "1.3.0";
+  var VERSION = "1.4.0";
+  var TEST_BANNER_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqgAAADwCAIAAABDmAG4AAADg0lEQVR42u3doQ3CQBSA4ZbcLggUjjACqoIBGnao6AQIdmCMLkBCUKAQbFGBwVWxwaU5eN+3wb0Tf564XN20YxXJ/bKvACCqhREAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AMAwg8ACD8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AOA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwA4DwAwDCDwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAwkxTtwKv1wa0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AIklGkMvpuDMEgL/X9YONHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQDhBwBmVDftGOrAn/fg1gGw8QMAwg8ACD8A8IuSEeSy2S4NAYpyu74MAWz8ACD8AIDwAwDCDwAIPwAg/ABAITzny8bDIQBs/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/AAg/ACD8AIDwAwDCDwCUJtwnPc/H2a0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AFA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AUD4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8A+JoA94cVGFUEQlcAAAAASUVORK5CYII=";
   var LOCAL_BANNER_HASH = "nitro_mirage_local_banner";
 
   var DEFAULTS = {
@@ -46,6 +47,14 @@
 
   function validUrl(value) {
     return typeof value === "string" && /^https:\/\/[^\s]+$/i.test(value.trim()) && value.length < 2049;
+  }
+
+  function activeBannerUrl() {
+    var opts = config();
+    if (!opts.enabled || !opts.customBanner) return null;
+    var value = String(opts.bannerUrl || "").trim();
+    if (!value) return TEST_BANNER_URI;
+    return validUrl(value) ? value : null;
   }
 
   function validColor(value) {
@@ -104,9 +113,10 @@
     if (!isRunning || !config().enabled || !isMine(user)) return user;
     var opts = config();
     var changes = {};
-    if (opts.customBanner && validUrl(opts.bannerUrl)) {
+    if (activeBannerUrl()) {
       changes.banner = LOCAL_BANNER_HASH;
-      report["banner user model"] = "rendered";
+      changes.getBannerURL = function () { return activeBannerUrl(); };
+      report["banner user model"] = "called";
     }
     if (opts.customDecoration && typeof opts.decorationAsset === "string") {
       var asset = opts.decorationAsset.trim().replace(/^.*\/avatar-decoration-presets\//, "").replace(/\.(png|gif|webp).*$/i, "");
@@ -129,13 +139,17 @@
     if (!isRunning || !config().enabled || !profile || !isMine(userId || profile.userId || profile.user_id || (profile.user && profile.user.id))) return profile;
     var opts = config();
     var changes = {};
-    if (opts.customBanner && validUrl(opts.bannerUrl)) {
+    if (activeBannerUrl()) {
       changes.banner = LOCAL_BANNER_HASH;
+      changes.getBannerURL = function () { return activeBannerUrl(); };
       if (profile.user && isMine(profile.user)) changes.user = decorateUser(profile.user);
       if (profile.userProfile && typeof profile.userProfile === "object") {
-        changes.userProfile = cloneWith(profile.userProfile, { banner: LOCAL_BANNER_HASH });
+        changes.userProfile = cloneWith(profile.userProfile, { banner: LOCAL_BANNER_HASH, getBannerURL: function () { return activeBannerUrl(); } });
       }
-      report["banner profile model"] = "rendered";
+      if (profile.displayProfile && typeof profile.displayProfile === "object" && isMine(profile.displayProfile)) {
+        changes.displayProfile = cloneWith(profile.displayProfile, { banner: LOCAL_BANNER_HASH, getBannerURL: function () { return activeBannerUrl(); } });
+      }
+      report["banner profile model"] = "called";
     }
     if (opts.nitroBadge) {
       changes.premiumSince = "2023-01-01T00:00:00.000Z";
@@ -302,9 +316,9 @@
       if (typeof iconUtils.getUserBannerURL === "function") {
         installAfter(iconUtils, "getUserBannerURL", function (args, ret) {
           var opts = config();
-          if (!opts.enabled || !opts.customBanner || !validUrl(opts.bannerUrl) || !isMine(args[0])) return ret;
-          report["banner url"] = "rendered";
-          return opts.bannerUrl.trim();
+          if (!isMine(args[0]) || !activeBannerUrl()) return ret;
+          report["banner url"] = "called";
+          return activeBannerUrl();
         }, "banner url");
       }
     }
@@ -312,10 +326,18 @@
     if (banners && banners !== iconUtils) {
       installAfter(banners, "getUserBannerURL", function (args, ret) {
         var opts = config();
-        if (!opts.enabled || !opts.customBanner || !validUrl(opts.bannerUrl) || !isMine(args[0])) return ret;
-        report["banner url"] = "rendered";
-        return opts.bannerUrl.trim();
+        if (!isMine(args[0]) || !activeBannerUrl()) return ret;
+        report["banner url"] = "called";
+        return activeBannerUrl();
       }, "banner url");
+    }
+
+    var displayStore = findModule(["getDisplayProfile"]);
+    if (displayStore && typeof displayStore.getDisplayProfile === "function") {
+      installAfter(displayStore, "getDisplayProfile", function (args, ret) {
+        if (!ret || !isMine(ret.userId || ret.user_id || ret.user || args[0])) return ret;
+        return decorateProfile(ret, ret.userId || ret.user_id || args[0]);
+      }, "display profile model");
     }
 
     var profiles = findModule(["getUserProfile", "getMutualGuilds"]) || findModule(["getUserProfile"]);
@@ -381,10 +403,18 @@
         }));
     }
 
+    var resolvedBanner = activeBannerUrl();
+    var bannerType = !s.customBanner ? "off" : !String(s.bannerUrl || "").trim() ? "bundled test image" : resolvedBanner ? "custom URL" : "invalid URL";
     var badge = s.nitroBadge ? (Number(s.nitroTier) === 1 ? "Nitro Basic" : "Nitro") : "No Nitro badge";
     var header = h(RN.View, { style: { padding: 18, backgroundColor: "#26272C", borderRadius: 10, borderWidth: 1, borderColor: "#45464D", gap: 10 } },
       h(RN.View, { style: { height: 80, borderRadius: 5, backgroundColor: validColor(s.primaryColor) ? s.primaryColor : "#5865F2", overflow: "hidden" } },
-        s.customBanner && validUrl(s.bannerUrl) ? h(RN.Image, { source: { uri: s.bannerUrl.trim() }, style: { width: "100%", height: 80 }, resizeMode: "cover" }) : null),
+        resolvedBanner ? h(RN.Image, {
+          source: { uri: resolvedBanner },
+          style: { width: "100%", height: 80 },
+          resizeMode: "cover",
+          onLoad: function () { if (report["banner preview"] !== "loaded") { report["banner preview"] = "loaded"; refresh(function (n) { return n + 1; }); } },
+          onError: function () { if (report["banner preview"] !== "image failed") { report["banner preview"] = "image failed"; refresh(function (n) { return n + 1; }); } }
+        }) : null),
       h(RN.View, { style: { flexDirection: "row", alignItems: "center", gap: 13 } },
         s.customAvatar && validUrl(s.avatarUrl)
           ? h(RN.Image, { source: { uri: s.avatarUrl.trim() }, style: { width: 56, height: 56, borderRadius: 28 } })
@@ -406,8 +436,9 @@
       section("Animated or static images", [
         toggle("Use local custom avatar", "customAvatar", "An HTTPS image or GIF URL. Nothing is uploaded."),
         input("Avatar HTTPS URL", "avatarUrl", "https://example.com/avatar.gif"),
-        toggle("Use local custom banner", "customBanner", "Displayed wherever the supported banner renderer is used."),
-        input("Banner HTTPS URL", "bannerUrl", "https://example.com/banner.gif")
+        toggle("Use local custom banner", "customBanner", "Uses a built-in test banner when the URL is empty."),
+        input("Banner HTTPS URL", "bannerUrl", "Leave blank for the bundled test image"),
+        text("Banner source: " + bannerType, { color: "#A8AAB2", fontSize: 12 })
       ]),
       section("Decorations and profile", [
         toggle("Use avatar decoration", "customDecoration", "Discord decoration asset hash only."),
@@ -419,6 +450,7 @@
         input("Profile effect SKU ID", "effectId", "Discord effect SKU", 25)
       ]),
       section("Compatibility", [
+        text("Current account: " + (ownId ? "resolved" : "not found"), { color: "#B9BBC1", fontSize: 12 }),
         text(Object.keys(report).map(function (key) { return key + ": " + report[key]; }).join("\n") || "No compatible profile hooks detected", { fontSize: 12, color: "#B9BBC1" }),
         text("Unavailable components are skipped to reduce crash risk. Some profile elements may need reopening to refresh.", { fontSize: 12, color: "#B9BBC1" })
       ]),
