@@ -8,13 +8,26 @@
       "description": "Client-only Nitro-style profile and appearance preview.",
       "author": "Local Plugin",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "1.1.0"
       },
       "versions": {
         "1.0.0": {
           "url": "https://raw.githubusercontent.com/Czczh/Test1/gh-pages/pool/dev.local.nitro-mirage@1.0.0.zip",
           "sha256": "73c313d59d90c761ab6d2de91b2d4d646c5a5b17da093f322e317fd8e3480fc1",
           "size": 5511,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.1.0": {
+          "url": "https://raw.githubusercontent.com/Czczh/Test1/gh-pages/pool/dev.local.nitro-mirage@1.1.0.zip",
+          "sha256": "abfa2ac43703cde604d61c009f05e8e60c15efa5b770644524869f54b230a633",
+          "size": 7162,
           "dependencies": {
             "revenge.api": {
               "version": ">=1 <2"
