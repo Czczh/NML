@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  var VERSION = "1.3.0";
+  var LOCAL_BANNER_HASH = "nitro_mirage_local_banner";
+
   var DEFAULTS = {
     enabled: true,
     nitroBadge: true,
@@ -101,6 +104,10 @@
     if (!isRunning || !config().enabled || !isMine(user)) return user;
     var opts = config();
     var changes = {};
+    if (opts.customBanner && validUrl(opts.bannerUrl)) {
+      changes.banner = LOCAL_BANNER_HASH;
+      report["banner user model"] = "rendered";
+    }
     if (opts.customDecoration && typeof opts.decorationAsset === "string") {
       var asset = opts.decorationAsset.trim().replace(/^.*\/avatar-decoration-presets\//, "").replace(/\.(png|gif|webp).*$/i, "");
       if (/^[a-zA-Z0-9_\-]{6,150}$/.test(asset)) {
@@ -122,6 +129,14 @@
     if (!isRunning || !config().enabled || !profile || !isMine(userId || profile.userId || profile.user_id || (profile.user && profile.user.id))) return profile;
     var opts = config();
     var changes = {};
+    if (opts.customBanner && validUrl(opts.bannerUrl)) {
+      changes.banner = LOCAL_BANNER_HASH;
+      if (profile.user && isMine(profile.user)) changes.user = decorateUser(profile.user);
+      if (profile.userProfile && typeof profile.userProfile === "object") {
+        changes.userProfile = cloneWith(profile.userProfile, { banner: LOCAL_BANNER_HASH });
+      }
+      report["banner profile model"] = "rendered";
+    }
     if (opts.nitroBadge) {
       changes.premiumSince = "2023-01-01T00:00:00.000Z";
       changes.premium_since = "2023-01-01T00:00:00.000Z";
@@ -288,8 +303,9 @@
         installAfter(iconUtils, "getUserBannerURL", function (args, ret) {
           var opts = config();
           if (!opts.enabled || !opts.customBanner || !validUrl(opts.bannerUrl) || !isMine(args[0])) return ret;
+          report["banner url"] = "rendered";
           return opts.bannerUrl.trim();
-        }, "custom banner");
+        }, "banner url");
       }
     }
     var banners = findModule(["getUserBannerURL"]);
@@ -297,8 +313,9 @@
       installAfter(banners, "getUserBannerURL", function (args, ret) {
         var opts = config();
         if (!opts.enabled || !opts.customBanner || !validUrl(opts.bannerUrl) || !isMine(args[0])) return ret;
+        report["banner url"] = "rendered";
         return opts.bannerUrl.trim();
-      }, "custom banner");
+      }, "banner url");
     }
 
     var profiles = findModule(["getUserProfile", "getMutualGuilds"]) || findModule(["getUserProfile"]);
@@ -405,7 +422,8 @@
         text(Object.keys(report).map(function (key) { return key + ": " + report[key]; }).join("\n") || "No compatible profile hooks detected", { fontSize: 12, color: "#B9BBC1" }),
         text("Unavailable components are skipped to reduce crash risk. Some profile elements may need reopening to refresh.", { fontSize: 12, color: "#B9BBC1" })
       ]),
-      section("Not spoofed", text("Sending premium emojis, stickers, larger files, higher-quality Go Live streams, extra server boosts and account privileges still require genuine Discord Nitro.", { color: "#B9BBC1", fontSize: 12 })));
+      section("Not spoofed", text("Sending premium emojis, stickers, larger files, higher-quality Go Live streams, extra server boosts and account privileges still require genuine Discord Nitro.", { color: "#B9BBC1", fontSize: 12 })),
+      text("Nitro Mirage v" + VERSION, { fontSize: 11, color: "#8E929C", textAlign: "center", marginTop: 24 }));
   }
 
   return {
