@@ -1,0 +1,15 @@
+{
+  "name": "Nitro Mirage Local",
+  "description": "Local Nitro-style profile and appearance preview. No messages or account updates.",
+  "authors": [
+    {
+      "name": "Local Plugin"
+    }
+  ],
+  "main": "index.js",
+  "version": "1.0.0",
+  "hash": "9ab60fec392ece290f38c2e9ca215e2684454ce50bd4bb69e451192bdc5d2833",
+  "vendetta": {
+    "icon": "ic_badge_nitro"
+  }
+}
