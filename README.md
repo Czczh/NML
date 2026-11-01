@@ -1,19 +1,17 @@
 # Nitro Mirage Local
 
-Client-side profile customization for Revenge.
+Client-side profile customization for Revenge Classic.
 
-Features: local Nitro and Boost badges, avatar and banner URLs, profile colors, and decorations where supported.
+## Features
+
+Nitro and Boost badges, avatar decorations, custom avatar and banner URLs, and profile colors.
 
 ## Install
 
-Revenge Classic: paste the plugin directory URL into Plugins > Install:
+Paste into Revenge Classic's plugin installer:
 
 `https://raw.githubusercontent.com/Czczh/Test1/main/nitro-mirage/`
 
-Revenge Next: add the repository through its repository manager:
+## Notes
 
-`https://raw.githubusercontent.com/Czczh/Test1/main/index.json`
-
-## Compatibility
-
-Classic v1.2.0 adds a `useBadges` hook. Open Plugin Settings > Compatibility to check its status. Changes are local and do not grant Nitro features.
+v1.3.0: Banner model fallback and version footer in settings. Visual changes remain local.
