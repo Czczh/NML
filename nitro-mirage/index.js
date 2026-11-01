@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var VERSION = "1.6.0";
+  var VERSION = "1.7.0";
   var TEST_BANNER_URI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqgAAADwCAIAAABDmAG4AAADg0lEQVR42u3doQ3CQBSA4ZbcLggUjjACqoIBGnao6AQIdmCMLkBCUKAQbFGBwVWxwaU5eN+3wb0Tf564XN20YxXJ/bKvACCqhREAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AMAwg8ACD8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAg/ACA8AOA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/ACD8AIDwAwDCDwAIPwA4DwAwDCDwAIPwAg/ACA8AMAwg8ACD8AIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAgPADAMIPAMIPAAg/ACD8AIDwAwDCDwAIPwAwkxTtwKv1wa0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AIklGkMvpuDMEgL/X9YONHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQDhBwBmVDftGOrAn/fg1gGw8QMAwg8ACD8A8IuSEeSy2S4NAYpyu74MAWz8ACD8AIDwAwDCDwAIPwAg/ABAITzny8bDIQBs/ACA8AMAwg8ACD8AIPwAgPADAMIPAAg/AAg/ACD8AIDwAwDCDwCUJtwnPc/H2a0DYOMHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AFA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AQDhBwCEHwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfABB+AED4AUD4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAIQfAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8AEH4AQPgBAOEHAOEHAIQfABB+AED4AQDhBwCEHwAQfgBA+AEA4QcAhB8A+JoA94cVGFUEQlcAAAAASUVORK5CYII=";
   var LOCAL_BANNER_HASH = "nitro_mirage_local_banner";
 
@@ -16,6 +16,7 @@
     customBanner: false,
     bannerUrl: "",
     experimentalHeaderBanner: true,
+    bannerHeight: 120,
     customDecoration: false,
     decorationAsset: "",
     customColors: false,
@@ -379,6 +380,7 @@
           if (screen && Number(screen.width) > 200) width = Number(screen.width);
         }
       } catch (_) {}
+      var height = Math.max(85, Math.min(180, Number(config().bannerHeight) || 120));
       var banner = React.createElement(RN.Image, {
         key: "nitro-mirage-header-image",
         source: { uri: uri },
@@ -388,8 +390,8 @@
           position: "absolute",
           top: -94,
           left: -30,
-          width: Math.max(260, width - 60),
-          height: 166
+          width: Math.max(320, width + 60),
+          height: height
         }
       });
       report["HeaderAvatar renderer"] = "rendered";
@@ -545,6 +547,8 @@
         toggle("Use local custom banner", "customBanner", "Uses a built-in test banner when the URL is empty."),
         input("Banner HTTPS URL", "bannerUrl", "Leave blank for the bundled test image"),
         toggle("Experimental header overlay", "experimentalHeaderBanner", "Draw the banner behind your own profile avatar when Discord omits its banner component."),
+        text("Banner height", { fontSize: 12, color: "#B9BBC1" }),
+        tiers("bannerHeight", [[95, "Compact"], [120, "Standard"], [145, "Tall"]]),
         text("Banner source: " + bannerType, { color: "#A8AAB2", fontSize: 12 })
       ]),
       section("Decorations and profile", [
