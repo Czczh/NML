@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "name": "Test1 Revenge Plugins",
+  "description": "Client-only appearance plugins",
+  "plugins": {
+    "dev.local.nitro-mirage": {
+      "name": "Nitro Mirage Local",
+      "description": "Client-only Nitro-style profile and appearance preview.",
+      "author": "Local Plugin",
+      "channels": {
+        "latest": "1.0.0"
+      },
+      "versions": {
+        "1.0.0": {
+          "url": "https://raw.githubusercontent.com/Czczh/Test1/gh-pages/pool/dev.local.nitro-mirage@1.0.0.zip",
+          "sha256": "73c313d59d90c761ab6d2de91b2d4d646c5a5b17da093f322e317fd8e3480fc1",
+          "size": 5511,
+          "dependencies": {
+            "revenge.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        }
+      }
+    }
+  }
+}
