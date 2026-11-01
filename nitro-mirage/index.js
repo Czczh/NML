@@ -301,7 +301,7 @@
         input("Profile effect SKU ID", "effectId", "Discord effect SKU", 25)
       ]),
       section("Compatibility", [
-        text("Active hooks: " + (Object.keys(report).filter(function (k) { return report[k] === "active"; }).join(", ") || "None detected"), { fontSize: 12, color: "#B9BBC1" }),
+        text(Object.keys(report).map(function (key) { return key + ": " + report[key]; }).join("\n") || "No compatible profile hooks detected", { fontSize: 12, color: "#B9BBC1" }),
         text("Unavailable components are skipped to reduce crash risk. Some profile elements may need reopening to refresh.", { fontSize: 12, color: "#B9BBC1" })
       ]),
       section("Not spoofed", text("Sending premium emojis, stickers, larger files, higher-quality Go Live streams, extra server boosts and account privileges still require genuine Discord Nitro.", { color: "#B9BBC1", fontSize: 12 })));
@@ -324,6 +324,7 @@
       report = {};
       ownId = null;
     },
-    settings: pluginSettings
+    settings: pluginSettings,
+    setHookStatus: function (name, state) { report[name] = state; }
   };
 })()
