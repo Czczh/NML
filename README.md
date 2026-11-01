@@ -2,16 +2,16 @@
 
 Client-side profile customization for Revenge Classic.
 
-## Features
-
-Nitro and Boost badges, avatar decorations, custom avatar and banner URLs, and profile colors.
-
 ## Install
-
-Paste into Revenge Classic's plugin installer:
 
 `https://raw.githubusercontent.com/Czczh/Test1/main/nitro-mirage/`
 
-## Notes
+Install or refetch the plugin, then restart Discord.
 
-v1.3.0: Banner model fallback and version footer in settings. Visual changes remain local.
+## Banner test
+
+Enable **Use local custom banner** and leave the banner URL empty. A bundled test image is used automatically. Paste an HTTPS image URL to replace it.
+
+Check **Compatibility** for `banner preview` and `banner url` results. These indicate rendering and hook invocation, respectively.
+
+Version 1.4.0. Changes are local to the client and do not grant Nitro privileges.
