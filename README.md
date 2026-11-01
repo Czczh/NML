@@ -6,12 +6,14 @@ Client-side profile customization for Revenge Classic.
 
 `https://raw.githubusercontent.com/Czczh/Test1/main/nitro-mirage/`
 
-Install or refetch the plugin, then restart Discord.
+Install or refetch, then restart Discord.
 
-## Banner test
+## Banner
 
-Enable **Use local custom banner** and leave the banner URL empty. A bundled test image is used automatically. Paste an HTTPS image URL to replace it.
+Enable **Use local custom banner**. Leave the URL blank for the bundled test image, or enter a direct HTTPS image URL.
 
-Check **Compatibility** for `banner preview` and `banner url` results. These indicate rendering and hook invocation, respectively.
+## Compatibility
 
-Version 1.4.0. Changes are local to the client and do not grant Nitro privileges.
+v1.5.0 adds experimental `DisplayBanner` and `ProfileBanner` rendering hooks. View their status under **Compatibility**.
+
+Changes remain local to the device.
